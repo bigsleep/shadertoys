@@ -24,7 +24,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
     float stepHeight = radius * 0.2;
     float startStep = random(vec2(index));
     float endStep = random(vec2((index + 1.0 >= frequency - epsilon) ? 0.0 : index + 1.0));
-    float r = radius + waveHeight * sin(a) + stepHeight * (startStep + (endStep - startStep) * smoothstep(0.0, 1.0, fract(b)));
+    float r = radius + waveHeight * sin(a) + stepHeight * mix(startStep, endStep, smoothstep(0.0, 1.0, fract(b)));
     float inside = (length(v) <= r) ? 1.0 : 0.0;
     fragColor = mix(vec4(1.0, 1.0, 1.0, 1.0), vec4(0.0, 0.0, 0.0, 1.0), inside);
 }
