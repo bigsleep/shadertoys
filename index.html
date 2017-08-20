@@ -1,0 +1,123 @@
+<!DOCTYPE HTML>
+<head>
+<meta charset="UTF-8">
+<title>shaderviewer</title>
+</head>
+
+<body>
+
+<div id="main">
+    <select id="shaderSelect">
+    </select>
+    <select id="texture0Select">
+    </select>
+    <div id="container"></div>
+</div>
+
+<script type="text/javascript" src="jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="three.js"></script>
+
+<script id="vertexShader" type="x-shader/x-vertex">
+void main()	{
+    gl_Position = vec4(position, 1.0);
+
+}
+</script>
+
+<script type="text/javascript">
+var fragmentShaderPrefix =`
+uniform vec2 iResolution;
+uniform float iTime;
+`;
+var fragmentShaderPostfix =`
+void main()
+{
+	mainImage(gl_FragColor, gl_FragCoord.xy);
+}
+`;
+
+function init(fragmentShaderUrl) {
+    var shaderViewer = {};
+    shaderViewer.uniforms = {
+        iTime:       { value: 1.0 },
+        iResolution: { value: new THREE.Vector2() }
+    };
+
+    var fragmentShaderBody = $.ajax({url: fragmentShaderUrl, async: false, dataType: "x-shader/x-fragment"}).responseText;
+    var fragmentShader = fragmentShaderPrefix + fragmentShaderBody + fragmentShaderPostfix;
+    var material = new THREE.ShaderMaterial( {
+        uniforms: shaderViewer.uniforms,
+        vertexShader: document.getElementById('vertexShader').textContent,
+        fragmentShader: fragmentShader
+    } );
+
+    camera = new THREE.Camera();
+    camera.position.z = 1;
+    scene = new THREE.Scene;
+
+    var geometry = new THREE.PlaneBufferGeometry(2, 2);
+
+    var mesh = new THREE.Mesh(geometry, material);
+    scene.add(mesh);
+
+    shaderViewer.renderer = new THREE.WebGLRenderer();
+    shaderViewer.renderer.setPixelRatio(window.devicePixelRatio);
+    var container = document.getElementById("container");
+    container.appendChild(shaderViewer.renderer.domElement);
+
+    shaderViewer.onWindowResize = function (event) {
+        shaderViewer.renderer.setSize(window.innerWidth, window.innerHeight);
+        shaderViewer.uniforms.iResolution.value.x = shaderViewer.renderer.domElement.width;
+        shaderViewer.uniforms.iResolution.value.y = shaderViewer.renderer.domElement.height;
+    };
+
+    shaderViewer.render = function () {
+        shaderViewer.uniforms.iTime.value += 0.05;
+        shaderViewer.renderer.render(scene, camera);
+    };
+
+    shaderViewer.animate = function () {
+        requestAnimationFrame(shaderViewer.animate);
+        shaderViewer.render();
+    };
+
+    shaderViewer.onWindowResize();
+
+    return shaderViewer;
+}
+
+var shaderNames =
+    [ "circle01.glsl"
+    , "wavycircle01.glsl"
+    , "wavycircle02.glsl"
+    , "perlinnoise01.glsl"
+    , "cubic01.glsl"
+    ];
+
+var shaderSelect = document.getElementById("shaderSelect");
+shaderNames.forEach(function (srcName) {
+    var opt = document.createElement('option');
+    opt.value = srcName;
+    opt.innerHTML = srcName;
+    shaderSelect.appendChild(opt);
+});
+
+var textureNames =
+    [ "circle-distance-field.png"
+    ];
+
+var texture0Select = document.getElementById("texture0Select");
+textureNames.forEach(function (srcName) {
+    var opt = document.createElement('option');
+    opt.value = srcName;
+    opt.innerHTML = srcName;
+    texture0Select.appendChild(opt);
+});
+
+var viewer = init("circle01.glsl");
+viewer.animate();
+</script>
+
+<style>
+</style>
+</body>
