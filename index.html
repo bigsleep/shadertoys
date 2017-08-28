@@ -25,17 +25,6 @@ void main()	{
 </script>
 
 <script type="text/javascript">
-var fragmentShaderPrefix =`
-uniform vec2 iResolution;
-uniform float iTime;
-`;
-var fragmentShaderPostfix =`
-void main()
-{
-	mainImage(gl_FragColor, gl_FragCoord.xy);
-}
-`;
-
 function init(fragmentShaderUrl) {
     var shaderViewer = {};
     shaderViewer.uniforms = {
@@ -43,13 +32,35 @@ function init(fragmentShaderUrl) {
         iResolution: { value: new THREE.Vector2() }
     };
 
-    var fragmentShaderBody = $.ajax({url: fragmentShaderUrl, async: false, dataType: "x-shader/x-fragment"}).responseText;
-    var fragmentShader = fragmentShaderPrefix + fragmentShaderBody + fragmentShaderPostfix;
-    var material = new THREE.ShaderMaterial( {
+    shaderViewer.buildShaderSrc = function (body) {
+        var fragmentShaderPrefix =`
+        uniform vec2 iResolution;
+        uniform float iTime;
+        `;
+        var fragmentShaderPostfix =`
+        void main()
+        {
+            mainImage(gl_FragColor, gl_FragCoord.xy);
+        }
+        `;
+        return fragmentShaderPrefix + body + fragmentShaderPostfix;
+    };
+
+    shaderViewer.fetchFragmentShader = function (shaderUrl) {
+        var body = $.ajax({url: shaderUrl, async: false, dataType: "x-shader/x-fragment"}).responseText;
+        return shaderViewer.buildShaderSrc(body);
+    };
+
+    var material = new THREE.ShaderMaterial({
         uniforms: shaderViewer.uniforms,
         vertexShader: document.getElementById('vertexShader').textContent,
-        fragmentShader: fragmentShader
-    } );
+        fragmentShader: shaderViewer.fetchFragmentShader(fragmentShaderUrl)
+    });
+
+    shaderViewer.changeShader = function (shaderUrl) {
+        material.fragmentShader = shaderViewer.fetchFragmentShader(shaderUrl);
+        material.needsUpdate = true;
+    };
 
     camera = new THREE.Camera();
     camera.position.z = 1;
@@ -115,6 +126,9 @@ textureNames.forEach(function (srcName) {
 });
 
 var viewer = init("circle01.glsl");
+$("#shaderSelect").change(function (event) {
+    viewer.changeShader(event.target.value);
+});
 viewer.animate();
 </script>
 
