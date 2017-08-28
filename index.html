@@ -46,35 +46,15 @@ function init(fragmentShaderUrl) {
         return fragmentShaderPrefix + body + fragmentShaderPostfix;
     };
 
-    shaderViewer.fetchFragmentShader = function (shaderUrl) {
-        var body = $.ajax({url: shaderUrl, async: false, dataType: "x-shader/x-fragment"}).responseText;
-        return shaderViewer.buildShaderSrc(body);
+    shaderViewer.loadFragmentShader = function (shaderUrl) {
+        var loader = new THREE.FileLoader();
+        loader.mimeType = "x-shader/x-fragment";
+        return new Promise(function (resolve) {
+            loader.load(shaderUrl, function (content) {
+                resolve(shaderViewer.buildShaderSrc(content));
+            });
+        });
     };
-
-    var material = new THREE.ShaderMaterial({
-        uniforms: shaderViewer.uniforms,
-        vertexShader: document.getElementById('vertexShader').textContent,
-        fragmentShader: shaderViewer.fetchFragmentShader(fragmentShaderUrl)
-    });
-
-    shaderViewer.changeShader = function (shaderUrl) {
-        material.fragmentShader = shaderViewer.fetchFragmentShader(shaderUrl);
-        material.needsUpdate = true;
-    };
-
-    camera = new THREE.Camera();
-    camera.position.z = 1;
-    scene = new THREE.Scene;
-
-    var geometry = new THREE.PlaneBufferGeometry(2, 2);
-
-    var mesh = new THREE.Mesh(geometry, material);
-    scene.add(mesh);
-
-    shaderViewer.renderer = new THREE.WebGLRenderer();
-    shaderViewer.renderer.setPixelRatio(window.devicePixelRatio);
-    var container = document.getElementById("container");
-    container.appendChild(shaderViewer.renderer.domElement);
 
     shaderViewer.onWindowResize = function (event) {
         shaderViewer.renderer.setSize(window.innerWidth, window.innerHeight);
@@ -92,7 +72,38 @@ function init(fragmentShaderUrl) {
         shaderViewer.render();
     };
 
-    shaderViewer.onWindowResize();
+    shaderViewer.loadFragmentShader(fragmentShaderUrl)
+        .then(function (fragmentShader) {
+        var material = new THREE.ShaderMaterial({
+            uniforms: shaderViewer.uniforms,
+            vertexShader: document.getElementById('vertexShader').textContent,
+            fragmentShader: fragmentShader
+        });
+
+        shaderViewer.changeShader = function (shaderUrl) {
+            shaderViewer.loadFragmentShader(shaderUrl)
+                .then(function (fragmentShader) {
+                material.fragmentShader = fragmentShader;
+                material.needsUpdate = true;
+            });
+        };
+
+        camera = new THREE.Camera();
+        camera.position.z = 1;
+        scene = new THREE.Scene;
+
+        var geometry = new THREE.PlaneBufferGeometry(2, 2);
+
+        var mesh = new THREE.Mesh(geometry, material);
+        scene.add(mesh);
+
+        shaderViewer.renderer = new THREE.WebGLRenderer();
+        shaderViewer.renderer.setPixelRatio(window.devicePixelRatio);
+        var container = document.getElementById("container");
+        container.appendChild(shaderViewer.renderer.domElement);
+
+        shaderViewer.onWindowResize();
+    });
 
     return shaderViewer;
 }
