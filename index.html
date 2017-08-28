@@ -25,7 +25,7 @@ void main()	{
 </script>
 
 <script type="text/javascript">
-function init(fragmentShaderUrl) {
+function init(fragmentShaderUrl, textureUrl) {
     var shaderViewer = {};
     shaderViewer.uniforms = {
         iTime:       { value: 1.0 },
@@ -56,56 +56,74 @@ function init(fragmentShaderUrl) {
         });
     };
 
+    shaderViewer.loadTexture = function (textureUrl) {
+        var loader = new THREE.TextureLoader();
+        return new Promise(function (resolve) {
+            loader.load(textureUrl, function (texture) {
+                resolve(texture);
+            });
+        });
+    };
+
     shaderViewer.onWindowResize = function (event) {
         shaderViewer.renderer.setSize(window.innerWidth, window.innerHeight);
         shaderViewer.uniforms.iResolution.value.x = shaderViewer.renderer.domElement.width;
         shaderViewer.uniforms.iResolution.value.y = shaderViewer.renderer.domElement.height;
     };
 
-    shaderViewer.render = function () {
-        shaderViewer.uniforms.iTime.value += 0.05;
-        shaderViewer.renderer.render(scene, camera);
-    };
-
-    shaderViewer.animate = function () {
-        requestAnimationFrame(shaderViewer.animate);
-        shaderViewer.render();
-    };
-
-    shaderViewer.loadFragmentShader(fragmentShaderUrl)
+    var resources = {};
+    return shaderViewer
+        .loadFragmentShader(fragmentShaderUrl)
         .then(function (fragmentShader) {
-        var material = new THREE.ShaderMaterial({
-            uniforms: shaderViewer.uniforms,
-            vertexShader: document.getElementById('vertexShader').textContent,
-            fragmentShader: fragmentShader
-        });
-
-        shaderViewer.changeShader = function (shaderUrl) {
-            shaderViewer.loadFragmentShader(shaderUrl)
-                .then(function (fragmentShader) {
-                material.fragmentShader = fragmentShader;
-                material.needsUpdate = true;
+            resources.fragmentShader = fragmentShader;
+            return shaderViewer.loadTexture(textureUrl)
+                .then(function (texture) {
+                    return { fragmentShader : fragmentShader, texture0 : texture };
+                });
+        })
+        .then(function (resource) {
+            shaderViewer.uniforms.iTexture0 = { type: "t", value: resource.texture0 };
+            var material = new THREE.ShaderMaterial({
+                uniforms: shaderViewer.uniforms,
+                vertexShader: document.getElementById('vertexShader').textContent,
+                fragmentShader: resource.fragmentShader
             });
-        };
 
-        camera = new THREE.Camera();
-        camera.position.z = 1;
-        scene = new THREE.Scene;
+           shaderViewer.render = function () {
+                shaderViewer.uniforms.iTime.value += 0.05;
+                shaderViewer.renderer.render(scene, camera);
+            };
 
-        var geometry = new THREE.PlaneBufferGeometry(2, 2);
+            shaderViewer.animate = function () {
+                requestAnimationFrame(shaderViewer.animate);
+                shaderViewer.render();
+            };
 
-        var mesh = new THREE.Mesh(geometry, material);
-        scene.add(mesh);
+            shaderViewer.changeShader = function (shaderUrl) {
+                shaderViewer.loadFragmentShader(shaderUrl)
+                    .then(function (fragmentShader) {
+                        material.fragmentShader = fragmentShader;
+                        material.needsUpdate = true;
+                    });
+            };
 
-        shaderViewer.renderer = new THREE.WebGLRenderer();
-        shaderViewer.renderer.setPixelRatio(window.devicePixelRatio);
-        var container = document.getElementById("container");
-        container.appendChild(shaderViewer.renderer.domElement);
+            camera = new THREE.Camera();
+            camera.position.z = 1;
+            scene = new THREE.Scene;
 
-        shaderViewer.onWindowResize();
-    });
+            var geometry = new THREE.PlaneBufferGeometry(2, 2);
 
-    return shaderViewer;
+            var mesh = new THREE.Mesh(geometry, material);
+            scene.add(mesh);
+
+            shaderViewer.renderer = new THREE.WebGLRenderer();
+            shaderViewer.renderer.setPixelRatio(window.devicePixelRatio);
+            var container = document.getElementById("container");
+            container.appendChild(shaderViewer.renderer.domElement);
+
+            shaderViewer.onWindowResize();
+            return shaderViewer;
+        });
 }
 
 var shaderNames =
@@ -136,11 +154,12 @@ textureNames.forEach(function (srcName) {
     texture0Select.appendChild(opt);
 });
 
-var viewer = init("circle01.glsl");
-$("#shaderSelect").change(function (event) {
-    viewer.changeShader(event.target.value);
+init(shaderNames[0], textureNames[0]).then(function (viewer) {
+    $("#shaderSelect").change(function (event) {
+        viewer.changeShader(event.target.value);
+    });
+    viewer.animate();
 });
-viewer.animate();
 </script>
 
 <style>
