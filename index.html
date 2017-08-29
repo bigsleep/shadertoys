@@ -34,15 +34,16 @@ function init(fragmentShaderUrl, textureUrl) {
 
     shaderViewer.buildShaderSrc = function (body) {
         var fragmentShaderPrefix =`
-        uniform vec2 iResolution;
-        uniform float iTime;
-        `;
+uniform vec2 iResolution;
+uniform float iTime;
+uniform sampler2D iChannel0;
+`;
         var fragmentShaderPostfix =`
-        void main()
-        {
-            mainImage(gl_FragColor, gl_FragCoord.xy);
-        }
-        `;
+void main()
+{
+    mainImage(gl_FragColor, gl_FragCoord.xy);
+}
+`;
         return fragmentShaderPrefix + body + fragmentShaderPostfix;
     };
 
@@ -82,7 +83,7 @@ function init(fragmentShaderUrl, textureUrl) {
                 });
         })
         .then(function (resource) {
-            shaderViewer.uniforms.iTexture0 = { type: "t", value: resource.texture0 };
+            shaderViewer.uniforms.iChannel0 = { type: "t", value: resource.texture0 };
             var material = new THREE.ShaderMaterial({
                 uniforms: shaderViewer.uniforms,
                 vertexShader: document.getElementById('vertexShader').textContent,
@@ -132,6 +133,8 @@ var shaderNames =
     , "wavycircle02.glsl"
     , "perlinnoise01.glsl"
     , "cubic01.glsl"
+    , "fragment01.glsl"
+    , "texture01.glsl"
     ];
 
 var shaderSelect = document.getElementById("shaderSelect");
