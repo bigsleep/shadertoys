@@ -52,6 +52,7 @@ function init(fragmentShaderUrl, textureUrl) {
 uniform vec2 iResolution;
 uniform float iTime;
 uniform sampler2D iChannel0;
+uniform vec2 iChannel0Size;
 `;
         var fragmentShaderPostfix =`
 void main()
@@ -99,6 +100,7 @@ void main()
         })
         .then(function (resource) {
             shaderViewer.uniforms.iChannel0 = { type: "t", value: resource.texture0 };
+            shaderViewer.uniforms.iChannel0Size = { type: "v2", value: new THREE.Vector2(resource.texture0.image.width, resource.texture0.image.width) };
             var material = new THREE.ShaderMaterial({
                 uniforms: shaderViewer.uniforms,
                 vertexShader: document.getElementById('vertexShader').textContent,
@@ -127,6 +129,7 @@ void main()
                 shaderViewer.loadTexture(textureUrl)
                     .then(function (texture) {
                         shaderViewer.uniforms.iChannel0.value = texture;
+                        shaderViewer.uniforms.iChannel0Size.value = new THREE.Vector2(texture.image.width, texture.image.width);
                     });
             };
 
@@ -168,6 +171,7 @@ var shaderNames =
     , "fragment01.glsl"
     , "texture01.glsl"
     , "vector-distance-field.glsl"
+    , "vector-distance-field-bicubic.glsl"
     ];
 
 var shaderSelect = document.getElementById("shaderSelect");
@@ -179,7 +183,9 @@ shaderNames.forEach(function (srcName) {
 });
 
 var textureNames =
-    [ "circle-distance-field.png"
+    [ "circle-distance-field-32.png"
+    , "circle-distance-field-64.png"
+    , "circle-distance-field-128.png"
     , "low-resolution-circle.png"
     ];
 
