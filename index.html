@@ -7,9 +7,24 @@
 <body>
 
 <div id="main">
+    <label for="shaderSelect">shader</label>
     <select id="shaderSelect">
     </select>
+
+    <label for="textureSelect">texture</label>
     <select id="texture0Select">
+    </select>
+
+    <label for="texture0MinFilter">minFilter</label>
+    <select id="texture0MinFilter">
+        <option value="0">Linear</option>
+        <option value="1">Nearest</option>
+    </select>
+
+    <label for="texture0MagFilter">magFilter</label>
+    <select id="texture0MagFilter">
+        <option value="0">Linear</option>
+        <option value="1">Nearest</option>
     </select>
     <div id="container"></div>
 </div>
@@ -115,6 +130,16 @@ void main()
                     });
             };
 
+            shaderViewer.changeTextureMinFilter = function (filterType) {
+                shaderViewer.uniforms.iChannel0.value.minFilter = filterType;
+                shaderViewer.uniforms.iChannel0.value.needsUpdate = true;
+            };
+
+            shaderViewer.changeTextureMaxFilter = function (filterType) {
+                shaderViewer.uniforms.iChannel0.value.magFilter = filterType;
+                shaderViewer.uniforms.iChannel0.value.needsUpdate = true;
+            };
+
             camera = new THREE.Camera();
             camera.position.z = 1;
             scene = new THREE.Scene;
@@ -166,6 +191,11 @@ textureNames.forEach(function (srcName) {
     texture0Select.appendChild(opt);
 });
 
+var filterTypes =
+    [ THREE.LinearFilter
+    , THREE.NearestFilter
+    ];
+
 init(shaderNames[0], textureNames[0]).then(function (viewer) {
     $("#shaderSelect").change(function (event) {
         viewer.changeShader(event.target.value);
@@ -173,6 +203,13 @@ init(shaderNames[0], textureNames[0]).then(function (viewer) {
     $("#texture0Select").change(function (event) {
         viewer.changeTexture(event.target.value);
     });
+    $("#texture0MinFilter").change(function (event) {
+        viewer.changeTextureMinFilter(filterTypes[event.target.value]);
+    });
+    $("#texture0MagFilter").change(function (event) {
+        viewer.changeTextureMaxFilter(filterTypes[event.target.value]);
+    });
+
     viewer.animate();
 });
 </script>
