@@ -83,7 +83,7 @@ void main()
     };
 
     shaderViewer.onWindowResize = function (event) {
-        shaderViewer.renderer.setSize(window.innerWidth, window.innerHeight);
+        shaderViewer.renderer.setSize(500, 281);
         shaderViewer.uniforms.iResolution.value.x = shaderViewer.renderer.domElement.width;
         shaderViewer.uniforms.iResolution.value.y = shaderViewer.renderer.domElement.height;
     };
@@ -173,6 +173,7 @@ var shaderNames =
     , "vector-distance-field.glsl"
     , "vector-distance-field-bicubic.glsl"
     , "raymarching01.glsl"
+    , "raymarching02.glsl"
     ];
 
 var shaderSelect = document.getElementById("shaderSelect");
@@ -222,5 +223,10 @@ init(shaderNames[0], textureNames[0]).then(function (viewer) {
 </script>
 
 <style>
+#container {
+    width: 500px;
+    height: 281px;
+    border: solid 1px #000000;
+}
 </style>
 </body>

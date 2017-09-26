@@ -58,45 +58,36 @@ mat4 ortho(in float left, in float right, in float bottom, in float top, in floa
 }
 */
 
-float distanceSphere(in vec3 center, in float radius, in vec3 p)
+float distanceSquare(in float width, in float height, in vec3 p)
 {
-    return distance(p, center) - radius;
+    return length(max(abs(p) - vec3(width * 0.5, height * 0.5, 0.0), vec3(0.0)));
 }
 
-vec4 calcColor(in vec3 center, in vec3 p, in vec3 light)
-{
-    vec3 normal = normalize(center - p);
-    float diffuse = clamp(dot(light, normal), 0.1, 1.0);
-    return vec4(vec3(diffuse), 1.0);
-}
-
-vec4 rayMarchingSphere(in vec3 center, in float radius, in vec3 rayOrigin, in vec3 rayDest, in vec3 light)
+vec4 rayMarchingSquare(in float width, in float height, in vec3 rayOrigin, in vec3 rayDest)
 {
     vec3 direction = normalize(rayDest - rayOrigin);
 
     vec3 p = rayOrigin;
     float d = 1.0;
-    for (int i = 0; i < 128; ++i) {
-        d = distanceSphere(center, radius, p);
+    for (int i = 0; i < 32; ++i) {
+        d = distanceSquare(width, height, p);
         if (d <= eps) break;
 
         p = p + direction * d;
     }
 
-    return (d <= eps) ? calcColor(center, p, light) : vec4(1.0);
+    return (d <= eps) ? vec4(vec3(0.0), 1.0) : vec4(1.0);
 }
 
 void mainImage(out vec4 fragColor, in vec2 fragCoord)
 {
-    // vec2 p = (2.0 * fragCoord - iResolution) / iResolution.y;
-    vec2 p = 2.0 * fragCoord - iResolution;
-    float radius = 0.2;
+    float width = 0.8 * iResolution.x / iResolution.y;
+    float height = 0.8;
+    vec2 p = (fragCoord - 0.5 * iResolution) / iResolution.y;
     vec3 center = vec3(0.0, 0.0, 0.0);
     vec3 up = vec3(0.0, 1.0, 0.0);
     vec3 rayOrigin = vec3(0.0, 0.0, 10.0);
-    mat4 m = lookAt(rayOrigin, center, up);
-    vec4 v = m * vec4(p, 0.0, 1.0);
-    vec3 light = normalize(vec3(1.0, 1.0, -2.0));
+    vec4 v = vec4(p, 0.0, 1.0);
 
-    fragColor = rayMarchingSphere(center, radius, rayOrigin, v.xyz, light);
+    fragColor = rayMarchingSquare(width, height, rayOrigin, v.xyz);
 }
