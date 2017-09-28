@@ -1,0 +1,247 @@
+<!DOCTYPE HTML>
+<head>
+<meta charset="UTF-8">
+<title>shaderviewer</title>
+</head>
+
+<body>
+
+<div id="root">
+</div>
+
+<script type="text/javascript" src="three.js"></script>
+<script src="https://unpkg.com/react@16/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/babel-standalone@6.15.0/babel.min.js"></script>
+
+<script id="vertexShader" type="x-shader/x-vertex">
+void main()	{
+    gl_Position = vec4(position, 1.0);
+
+}
+</script>
+
+<script type="text/babel">
+const fragmentShaderPrefix =`
+uniform vec2 iResolution;
+uniform float iTime;
+uniform sampler2D iChannel0;
+uniform vec2 iChannel0Size;
+`;
+
+const fragmentShaderPostfix =`
+void main()
+{
+    mainImage(gl_FragColor, gl_FragCoord.xy);
+}
+`;
+
+const shaderNames = [
+    "circle01.glsl",
+    "wavycircle01.glsl",
+    "wavycircle02.glsl",
+    "perlinnoise01.glsl",
+    "cubic01.glsl",
+    "fragment01.glsl",
+    "texture01.glsl",
+    "vector-distance-field.glsl",
+    "vector-distance-field-bicubic.glsl",
+    "raymarching01.glsl",
+    "raymarching02.glsl",
+];
+
+const textureNames = [
+    "circle-distance-field-32.png",
+    "circle-distance-field-64.png",
+    "circle-distance-field-128.png",
+    "low-resolution-circle.png",
+];
+
+const filterNames = [
+    "Linear",
+    "Nearest",
+];
+
+const filterTypes = [
+    THREE.LinearFilter,
+    THREE.NearestFilter,
+];
+
+class ShaderViewer {
+    constructor() {
+        this.state = {
+            fragmentShader: null,
+            uniforms: {
+                iTime:       { value: 0.0 },
+                iResolution: { value: new THREE.Vector2(500, 281) }
+            }
+        }
+
+        this.three = {};
+        this.onUpdate = () => {}
+    }
+
+    loadFragmentShader(shaderUrl) {
+        const self = this;
+        const buildShaderSrc = body => {
+            return fragmentShaderPrefix + body + fragmentShaderPostfix;
+        }
+        const loader = new THREE.FileLoader();
+        loader.mimeType = "x-shader/x-fragment";
+        return new Promise(resolve => {
+            loader.load(shaderUrl, content => {
+                resolve(buildShaderSrc(content));
+                self.state.fragmentShader = content;
+                self.onUpdate(self.state);
+            });
+        });
+    }
+
+    loadTexture(textureUrl) {
+        const loader = new THREE.TextureLoader();
+        return new Promise(resolve => {
+            loader.load(textureUrl, texture => {
+                resolve(texture);
+            });
+        });
+    }
+
+    changeShader(shaderUrl) {
+        const self = this;
+        this.loadFragmentShader(shaderUrl)
+            .then(fragmentShader => {
+                self.three.material.fragmentShader = fragmentShader;
+                self.three.material.needsUpdate = true;
+            });
+    }
+
+    changeTexture(textureUrl) {
+        const self = this;
+        this.loadTexture(textureUrl)
+            .then(texture => {
+                texture.minFilter = this.state.uniforms.iChannel0.value.minFilter;
+                texture.magFilter = this.state.uniforms.iChannel0.value.magFilter;
+                self.state.uniforms.iChannel0.value = texture;
+                self.state.uniforms.iChannel0Size.value = new THREE.Vector2(texture.image.width, texture.image.width);
+                self.onUpdate(self.state);
+            });
+    }
+
+    changeTextureMinFilter(filterType) {
+        this.state.uniforms.iChannel0.value.minFilter = parseInt(filterType, 10);
+        this.state.uniforms.iChannel0.value.needsUpdate = true;
+        this.onUpdate(this.state);
+    }
+
+    changeTextureMagFilter(filterType) {
+        this.state.uniforms.iChannel0.value.magFilter = parseInt(filterType, 10);
+        this.state.uniforms.iChannel0.value.needsUpdate = true;
+        this.onUpdate(this.state);
+    };
+
+    initialize(container, fragmentShaderUrl, textureUrl, onUpdate) {
+        const self = this;
+        this.onUpdate = onUpdate;
+        this.loadFragmentShader(fragmentShaderUrl)
+        .then(fragmentShader => {
+            return self.loadTexture(textureUrl)
+                .then(texture => {
+                    return { fragmentShader : fragmentShader, texture : texture };
+                });
+        })
+        .then(resource => {
+            self.initializeThree(container, resource.fragmentShader, resource.texture);
+        });
+    }
+
+    initializeThree(container, fragmentShader, texture) {
+        this.state.uniforms.iChannel0 =  { type: "t", value: texture };
+        this.state.uniforms.iChannel0Size = { type: "v2", value: new THREE.Vector2(texture.image.width, texture.image.width) };
+        this.three.camera = new THREE.Camera();
+        this.three.camera.position.z = 1;
+        this.three.geometry = new THREE.PlaneBufferGeometry(2, 2);
+        this.three.material = new THREE.ShaderMaterial({
+            uniforms: this.state.uniforms,
+            vertexShader: document.getElementById('vertexShader').textContent,
+            fragmentShader: fragmentShader
+        });
+        this.three.mesh = new THREE.Mesh(this.three.geometry, this.three.material);
+        this.three.scene = new THREE.Scene;
+        this.three.scene.add(this.three.mesh);
+
+        this.three.renderer = new THREE.WebGLRenderer();
+        this.three.renderer.setSize(500, 281);
+        this.three.renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(this.three.renderer.domElement);
+
+        this.animate();
+    }
+
+    animate() {
+        const self = this;
+        const callback = () => { self.animate() }
+        requestAnimationFrame(callback);
+        this.render();
+    }
+
+    render() {
+        this.state.uniforms.iTime.value += 0.05;
+        this.three.renderer.render(this.three.scene, this.three.camera);
+        this.onUpdate(this.state);
+    }
+}
+
+class ShaderViewerComponent extends React.Component {
+    render() {
+        return (
+            <div>
+                <div>
+                    <Select optionValues={shaderNames} optionNames={shaderNames} onChange={selected => this.props.shaderViewer.changeShader(selected)} />
+                    <Select optionValues={textureNames} optionNames={textureNames} onChange={selected => this.props.shaderViewer.changeTexture(selected)} />
+                    <Select optionValues={filterTypes} optionNames={filterNames} onChange={selected => this.props.shaderViewer.changeTextureMinFilter(selected)} />
+                    <Select optionValues={filterTypes} optionNames={filterNames} onChange={selected => this.props.shaderViewer.changeTextureMagFilter(selected)} />
+                </div>
+                <Player shaderViewer={this.props.shaderViewer} />
+            </div>
+        );
+    }
+}
+
+class Player extends React.Component {
+    componentDidMount() {
+        this.props.shaderViewer.initialize(this.container, shaderNames[0], textureNames[0], this.setState.bind(this));
+    }
+
+    render() {
+        return <div className="player" ref={thisNode => {this.container = thisNode}}></div>;
+    }
+}
+
+class Select extends React.Component {
+    render() {
+        const options = this.props.optionValues.map((value, index) => {
+            return (<option value={value}>{this.props.optionNames[index]}</option>);
+        });
+
+        const onChange = e => {
+            const options = e.target.options;
+            const value = options[e.target.selectedIndex].value;
+            this.props.onChange(value);
+        }
+
+        return (<select onChange={onChange}>{options}</select>);
+    }
+}
+
+const shaderViewer = new ShaderViewer;
+ReactDOM.render(<ShaderViewerComponent shaderViewer={shaderViewer} />, document.getElementById('root'));
+</script>
+
+<style>
+.player {
+    width: 500px;
+    height: 281px;
+    border: solid 1px #000000;
+}
+</style>
+</body>
