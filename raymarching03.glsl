@@ -1,5 +1,5 @@
 const float pi = 3.141592653589793;
-const float eps = 1.0E-6;
+const float eps = 1.0E-4;
 const int range = 2;
 
 mat4 perspective(in float fovy, in float aspect, in float near, in float far)
