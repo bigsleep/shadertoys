@@ -68,13 +68,23 @@ const filterTypes = [
     THREE.NearestFilter,
 ];
 
+const UniformTypes = {
+    "i": "int",
+    "f": "float",
+    "v2": "vec2",
+    "v3": "vec3",
+    "v4": "vec4",
+    "m4": "mat4",
+    "t": "sampler2D"
+};
+
 class ShaderViewer {
     constructor() {
         this.state = {
             fragmentShader: null,
             uniforms: {
-                iTime:       { value: 0.0 },
-                iResolution: { value: new THREE.Vector2(500, 281) }
+                iTime:       { type: "f", value: 0.0 },
+                iResolution: { type: "v2", value: new THREE.Vector2(500, 281) }
             }
         }
 
@@ -82,10 +92,18 @@ class ShaderViewer {
         this.onUpdate = () => {}
     }
 
+    buildUniformsHeader (uniforms) {
+        return Object.keys(uniforms).map(key => {
+            const typeName = UniformTypes[uniforms[key].type];
+            return String.concat("uniform ", typeName, " ", key, ";\n");
+        }).join("");
+    }
+
     loadFragmentShader(shaderUrl) {
         const self = this;
+        const uniformsHeader = this.buildUniformsHeader(this.state.uniforms);
         const buildShaderSrc = body => {
-            return fragmentShaderPrefix + body + fragmentShaderPostfix;
+            return uniformsHeader + body + fragmentShaderPostfix;
         }
         const loader = new THREE.FileLoader();
         loader.mimeType = "x-shader/x-fragment";
