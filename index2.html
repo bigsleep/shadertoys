@@ -95,7 +95,7 @@ class ShaderViewer {
     buildUniformsHeader (uniforms) {
         return Object.keys(uniforms).map(key => {
             const typeName = UniformTypes[uniforms[key].type];
-            return String.concat("uniform ", typeName, " ", key, ";\n");
+            return "uniform " + typeName + " " + key + ";\n";
         }).join("");
     }
 
@@ -239,7 +239,7 @@ class Player extends React.Component {
 class Select extends React.Component {
     render() {
         const options = this.props.optionValues.map((value, index) => {
-            return (<option value={value}>{this.props.optionNames[index]}</option>);
+            return (<option key={index} value={value}>{this.props.optionNames[index]}</option>);
         });
 
         const onChange = e => {
