@@ -1,20 +1,21 @@
+const float pi = 3.141592653589793;
 const float eps = 1.0E-6;
 
-mat4 lookAt(in vec3 eye, in vec3 center, in vec3 up) {
-    vec3 za = normalize(eye - center);
-    vec3 xa = normalize(cross(up, za));
-    vec3 ya = cross(xa, za);
-    float xd = - dot(xa, eye);
-    float yd = - dot(ya, eye);
-    float zd = - dot(za, eye);
+mat4 invPerspective(in float fovy, in float aspect, in float near, in float far)
+{
+    float t = tan(0.5 * fovy);
+    float a = aspect * t;
+    float b = t;
+    float c = 0.5 / (near - far);
+    float d = 0.5 / (near + far);
     return mat4(
-        vec4(xa.x, ya.x, za.x, 0.0),
-        vec4(xa.y, ya.y, za.y, 0.0),
-        vec4(xa.z, ya.z, za.z, 0.0),
-        vec4(xd, yd, zd, 1.0));
+        vec4(a, 0.0, 0.0, 0.0),
+        vec4(0.0, b, 0.0, 0.0),
+        vec4(0.0, 0.0, 0.0, c),
+        vec4(0.0, 0.0, -1.0, d));
 }
 
-mat4 lookAtInv(in vec3 eye, in vec3 center, in vec3 up) {
+mat4 invLookAt(in vec3 eye, in vec3 center, in vec3 up) {
     vec3 za = normalize(eye - center);
     vec3 xa = normalize(cross(up, za));
     vec3 ya = cross(xa, za);
@@ -88,14 +89,20 @@ vec4 rayMarchingSphere(in vec3 center, in float radius, in vec3 rayOrigin, in ve
 
 void mainImage(out vec4 fragColor, in vec2 fragCoord)
 {
-    // vec2 p = (2.0 * fragCoord - iResolution) / iResolution.y;
-    vec2 p = 2.0 * fragCoord - iResolution;
-    float radius = 0.2;
+    vec2 p = (fragCoord - 0.5 * iResolution) / iResolution;
+    float radius = 0.4;
     vec3 center = vec3(0.0, 0.0, 0.0);
     vec3 up = vec3(0.0, 1.0, 0.0);
     vec3 rayOrigin = vec3(0.0, 0.0, 10.0);
-    mat4 m = lookAt(rayOrigin, center, up);
-    vec4 v = m * vec4(p, 0.0, 1.0);
+
+    float fovy = 120.0 * pi / 180.0;
+    float aspect = iResolution.x / iResolution.y;
+    float near = 0.0;
+    float far = 10.0;
+
+    mat4 m = invPerspective(fovy, aspect, near, far);
+    mat4 n = invLookAt(rayOrigin, center, up);
+    vec4 v = n * m * vec4(p, 0.0, 1.0);
     vec3 light = normalize(vec3(1.0, 1.0, -2.0));
 
     fragColor = rayMarchingSphere(center, radius, rayOrigin, v.xyz, light);

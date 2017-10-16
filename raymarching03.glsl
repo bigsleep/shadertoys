@@ -33,7 +33,7 @@ mat4 invPerspective(in float fovy, in float aspect, in float near, in float far)
         vec4(0.0, 0.0, -1.0, d));
 }
 
-mat4 lookAtInv(in vec3 eye, in vec3 center, in vec3 up) {
+mat4 invLookAt(in vec3 eye, in vec3 center, in vec3 up) {
     vec3 za = normalize(eye - center);
     vec3 xa = normalize(cross(up, za));
     vec3 ya = cross(xa, za);
@@ -128,7 +128,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
     float far = 10.0;
 
     mat4 m = invPerspective(fovy, aspect, near, far);
-    mat4 n = lookAtInv(rayOrigin, center, up);
+    mat4 n = invLookAt(rayOrigin, center, up);
     vec4 dest = n * m * vec4(vec3(p, 0.0), 1.0);
     vec3 rayDirection = normalize(dest.xyz - rayOrigin);
 
