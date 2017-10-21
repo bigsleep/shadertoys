@@ -82,9 +82,9 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
     float near = 0.0;
     float far = 100.0;
 
-    mat4 m = invPerspective(fovy, aspect, near, far);
+    mat4 m = iInvPerspective;
     mat4 n = invLookAt(rayOrigin, center, up);
-    vec4 dest = n * m * vec4(vec3(p, 0.0), near);
+    vec4 dest = n * m * vec4(p, iPerspectiveNear, 1.0);
     vec3 rayDirection = normalize(dest.xyz - rayOrigin);
 
     float waveHeight = 0.0003;

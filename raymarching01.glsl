@@ -95,14 +95,9 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
     vec3 up = vec3(0.0, 1.0, 0.0);
     vec3 rayOrigin = vec3(0.0, 0.0, 10.0);
 
-    float fovy = 120.0 * pi / 180.0;
-    float aspect = iResolution.x / iResolution.y;
-    float near = 0.0;
-    float far = 10.0;
-
-    mat4 m = invPerspective(fovy, aspect, near, far);
+    mat4 m = iInvPerspective;
     mat4 n = invLookAt(rayOrigin, center, up);
-    vec4 v = n * m * vec4(p, 0.0, 1.0);
+    vec4 v = n * m * vec4(p, iPerspectiveNear, 1.0);
     vec3 light = normalize(vec3(1.0, 1.0, -2.0));
 
     fragColor = rayMarchingSphere(center, radius, rayOrigin, v.xyz, light);
