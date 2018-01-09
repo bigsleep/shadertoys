@@ -1,27 +1,7 @@
-<!DOCTYPE HTML>
-<head>
-<meta charset="UTF-8">
-<title>shaderviewer</title>
-</head>
+import React from 'react';
+import ReactDOM from 'react-dom';
+import * as THREE from 'three';
 
-<body>
-
-<div id="root">
-</div>
-
-<script type="text/javascript" src="three.js"></script>
-<script src="https://unpkg.com/react@16/umd/react.development.js"></script>
-<script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"></script>
-<script src="https://unpkg.com/babel-standalone@6.15.0/babel.min.js"></script>
-
-<script id="vertexShader" type="x-shader/x-vertex">
-void main()	{
-    gl_Position = vec4(position, 1.0);
-
-}
-</script>
-
-<script type="text/babel">
 const fragmentShaderPrefix =`
 uniform vec2 iResolution;
 uniform float iTime;
@@ -40,26 +20,26 @@ const playerWidth = 500.0;
 const playerHeight = 281.0;
 
 const shaderNames = [
-    "circle01.glsl",
-    "wavycircle01.glsl",
-    "wavycircle02.glsl",
-    "perlinnoise01.glsl",
-    "cubic01.glsl",
-    "fragment01.glsl",
-    "texture01.glsl",
-    "vector-distance-field.glsl",
-    "vector-distance-field-bicubic.glsl",
-    "raymarching01.glsl",
-    "raymarching02.glsl",
-    "raymarching03.glsl",
-    "raymarching04.glsl",
+    "shaders/circle01.glsl",
+    "shaders/wavycircle01.glsl",
+    "shaders/wavycircle02.glsl",
+    "shaders/perlinnoise01.glsl",
+    "shaders/cubic01.glsl",
+    "shaders/fragment01.glsl",
+    "shaders/texture01.glsl",
+    "shaders/vector-distance-field.glsl",
+    "shaders/vector-distance-field-bicubic.glsl",
+    "shaders/raymarching01.glsl",
+    "shaders/raymarching02.glsl",
+    "shaders/raymarching03.glsl",
+    "shaders/raymarching04.glsl",
 ];
 
 const textureNames = [
-    "circle-distance-field-32.png",
-    "circle-distance-field-64.png",
-    "circle-distance-field-128.png",
-    "low-resolution-circle.png",
+    "resources/circle-distance-field-32.png",
+    "resources/circle-distance-field-64.png",
+    "resources/circle-distance-field-128.png",
+    "resources/low-resolution-circle.png",
 ];
 
 const filterNames = [
@@ -410,13 +390,3 @@ class Select extends React.Component {
 
 const shaderViewer = new ShaderViewer;
 ReactDOM.render(<ShaderViewerComponent shaderViewer={shaderViewer} />, document.getElementById('root'));
-</script>
-
-<style>
-.player {
-    width: 500px;
-    height: 281px;
-    border: solid 1px #000000;
-}
-</style>
-</body>
