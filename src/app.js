@@ -33,6 +33,7 @@ const shaderNames = [
     "shaders/raymarching02.glsl",
     "shaders/raymarching03.glsl",
     "shaders/raymarching04.glsl",
+    "shaders/msdf01.glsl",
 ];
 
 const textureNames = [
@@ -40,6 +41,7 @@ const textureNames = [
     "resources/circle-distance-field-64.png",
     "resources/circle-distance-field-128.png",
     "resources/low-resolution-circle.png",
+    "resources/inconsolata-msdf.png",
 ];
 
 const filterNames = [
