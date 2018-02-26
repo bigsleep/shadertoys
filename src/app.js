@@ -34,6 +34,7 @@ const shaderNames = [
     "shaders/raymarching03.glsl",
     "shaders/raymarching04.glsl",
     "shaders/msdf01.glsl",
+    "shaders/randomcurve01.glsl",
 ];
 
 const textureNames = [
